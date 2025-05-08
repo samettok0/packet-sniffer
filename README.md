@@ -1,4 +1,4 @@
-# Packet Sniffer (Part 1)
+# Packet Sniffer
 
 A simple packet sniffer written in C using the libpcap library. This tool captures network packets from a specified network interface.
 
