@@ -1,0 +1,19 @@
+# Ignore macOS system files
+.DS_Store
+
+# Ignore build artifacts
+packetsniff
+packetsniff.dSYM/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+
+# Ignore editor-specific files
+.vscode/
+.idea/
+*.swp
+
+# Ignore core dumps
+core
+core.*
