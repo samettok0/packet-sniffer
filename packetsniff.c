@@ -10,6 +10,19 @@ int link_header_length = 0; // Length of the link layer header
 // Callback function for pcap_loop()
 // Executed for each captured packet
 void call_me_pls(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packet_ptr) {
+    // Basic Ethernet header definition
+    struct ether_header {
+        u_char ether_dhost[6];
+        u_char ether_shost[6];
+        u_short ether_type;
+    };
+
+    // Check if the packet is IPv4
+    const struct ether_header *eth_hdr = (const struct ether_header *)packet_ptr;
+    if (ntohs(eth_hdr->ether_type) != 0x0800) {
+        // Not IPv4, skip
+        return;
+    }
     // Adjust the pointer to skip the link layer header
     packet_ptr += link_header_length;
 
