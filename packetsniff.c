@@ -254,16 +254,29 @@ void call_me_pls(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *p
 }
 
 void print_usage(const char *program_name) {
-    printf("Usage: %s <interface> <packet_count> [-n]\n", program_name);
+    printf("Usage: %s <interface> <packet_count> [-n] [-f \"filter\"]\n", program_name);
     printf("  interface    : Network interface to capture packets from (e.g., en0)\n");
     printf("  packet_count : Number of packets to capture (-1 for infinite)\n");
     printf("  -n           : Disable DNS hostname resolution\n");
-    printf("\nExample: %s en0 10\n", program_name);
+    printf("  -f \"filter\"  : BPF filter expression (e.g., \"host google.com\" or \"port 443\")\n");
+    printf("\nExample: %s en0 10 -f \"host google.com and port 443\"\n", program_name);
+    printf("\nCommon filter expressions:\n");
+    printf("  host example.com        : Only packets to/from example.com\n");
+    printf("  port 80                 : Only HTTP traffic\n");
+    printf("  src 192.168.1.1         : Only packets from a specific IP\n");
+    printf("  dst port 443            : Only packets to HTTPS ports\n");
+    printf("  icmp                    : Only ICMP packets\n");
+    printf("  tcp                     : Only TCP packets\n");
+    printf("  udp port 53             : Only DNS traffic\n");
 }
 
 int main(int argc, char *argv[]) {
-    // Check command-line arguments
-    if (argc < 3 || argc > 4) {
+    char *filter_exp = NULL;
+    int opt_dns_resolution = 1;
+    int i;
+
+    // Check minimum command-line arguments
+    if (argc < 3) {
         print_usage(argv[0]);
         return 1;
     }
@@ -279,16 +292,39 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    // Optional argument to disable DNS resolution
-    if (argc == 4 && strcmp(argv[3], "-n") == 0) {
-        enable_dns_resolution = 0;
-        printf("DNS hostname resolution disabled\n");
-    } else {
+    // Parse additional arguments
+    for (i = 3; i < argc; i++) {
+        if (strcmp(argv[i], "-n") == 0) {
+            opt_dns_resolution = 0;
+        } else if (strcmp(argv[i], "-f") == 0 && i + 1 < argc) {
+            filter_exp = argv[i + 1];
+            i++; // Skip the next argument (the filter string)
+        } else {
+            printf("ERROR: Unknown option '%s'\n", argv[i]);
+            print_usage(argv[0]);
+            return 1;
+        }
+    }
+    
+    // Set DNS resolution option
+    enable_dns_resolution = opt_dns_resolution;
+    if (enable_dns_resolution) {
         printf("DNS hostname resolution enabled (use -n to disable)\n");
+    } else {
+        printf("DNS hostname resolution disabled\n");
     }
     
     // Initialize hostname cache
     init_hostname_cache();
+
+    // Get network device info
+    bpf_u_int32 net;
+    bpf_u_int32 mask;
+    if (pcap_lookupnet(device, &net, &mask, errBuf) == -1) {
+        printf("WARNING: Can't get netmask for device %s: %s\n", device, errBuf);
+        mask = 0;
+        net = 0;
+    }
 
     // Open the network device for packet capture
     pcap_t *capture_device = pcap_open_live(device, BUFSIZ, 0, 0, errBuf);
@@ -297,6 +333,30 @@ int main(int argc, char *argv[]) {
     if (!capture_device) {
         printf("ERROR: pcap_open_live() %s\n", errBuf);
         return 1;
+    }
+
+    // Set up filter if specified
+    if (filter_exp != NULL) {
+        struct bpf_program fp;
+        
+        printf("Applying filter: \"%s\"\n", filter_exp);
+        
+        // Compile the filter
+        if (pcap_compile(capture_device, &fp, filter_exp, 0, mask) == -1) {
+            printf("ERROR: Couldn't compile filter \"%s\": %s\n", 
+                   filter_exp, pcap_geterr(capture_device));
+            return 1;
+        }
+        
+        // Apply the filter
+        if (pcap_setfilter(capture_device, &fp) == -1) {
+            printf("ERROR: Couldn't apply filter \"%s\": %s\n", 
+                   filter_exp, pcap_geterr(capture_device));
+            return 1;
+        }
+        
+        // Free the compiled filter when done
+        pcap_freecode(&fp);
     }
 
     // Set link header length BEFORE starting pcap_loop
@@ -319,5 +379,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // Clean up
+    pcap_close(capture_device);
+    
     return 0;
 }

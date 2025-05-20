@@ -1,109 +1,249 @@
-# Packet Sniffer
+🧪 Packet Sniffer
+============================
 
-A simple network packet sniffer written in C that captures and analyzes network traffic. The program can capture and display information about IPv4 packets, including TCP, UDP, and ICMP protocols.
+A powerful network packet sniffer written in C that captures, analyzes, and displays network traffic with filtering capabilities. This tool enables network troubleshooting, protocol analysis, and monitoring of network communications.
 
-## Features
+---
 
-- Captures IPv4 packets
-- Supports multiple protocols:
-  - TCP (with flag detection)
-  - UDP
-  - ICMP
-- Displays detailed packet information:
-  - Source and destination IP addresses
-  - Protocol type
-  - Port numbers (for TCP/UDP)
-  - TCP flags (SYN, ACK, URG)
-  - ICMP type and code
-  - TTL and TOS values
-  - Packet ID
+✨ Features
+----------
 
-## Requirements
+🧠 **Protocol Support**
+- IPv4 packet analysis
+- TCP with detailed flag information (SYN, ACK, FIN, RST, PSH, URG)
+- UDP with length information
+- ICMP with type and code descriptions
 
-- Linux/Unix-like operating system
+📡 **Display Information**
+- Source and destination IP addresses with hostname resolution
+- Service name identification for common ports
+- Packet sizing in readable format (bytes/kilobytes)
+- TCP flags, window sizes, and sequence numbers
+- Accurate timestamps with microsecond precision
+- Packet ID, TTL, and TOS values
+
+🔍 **Filtering Capabilities**
+- Supports Berkeley Packet Filter (BPF) syntax
+- Filter by host, port, protocol, or combinations
+- Advanced filtering options for specific packet types
+
+⚙️ **Flexible Configuration**
+- Command-line arguments for all settings
+- Configurable packet count
+- Selectable network interface
+- Optional DNS resolution (with caching for performance)
+
+---
+
+📦 Requirements
+------------
+- Linux/Unix/macOS operating system
 - libpcap development library
-- GCC compiler
+- C compiler (gcc or clang)
+- Root/administrator privileges (required for packet capture)
 
-### Installing Dependencies
+---
 
-On Ubuntu/Debian:
+🚀 Installation
+------------
+
+🛠 **Installing Dependencies**
+
+**Ubuntu/Debian**
 ```bash
-sudo apt-get install libpcap-dev
+sudo apt-get install libpcap-dev gcc
 ```
 
-On macOS:
+**Fedora/RHEL/CentOS**
+```bash
+sudo dnf install libpcap-devel gcc
+```
+
+**macOS**
 ```bash
 brew install libpcap
 ```
 
-## Building
+---
 
-You can compile the program using either `cc` or `gcc`. Both commands will work:
+🔧 Building
+--------
 
-Using `cc`:
+You can compile the program using either `cc` or `gcc`:
+
 ```bash
 cc -o packetsniff packetsniff.c -lpcap
 ```
 
-Using `gcc`:
+Or using:
+
 ```bash
 gcc -o packetsniff packetsniff.c -lpcap
 ```
 
-> **Note:** `cc` is the traditional name for the C compiler on Unix systems. It's often a symbolic link to the actual compiler (like `gcc` or `clang`) on your system. Both commands will work the same way.
+💡 `cc` is the traditional name for the C compiler on Unix systems. It's often a symbolic link to the actual compiler (like `gcc` or `clang`) on your system.
 
-After compilation, run the program with sudo privileges:
-```bash
-sudo ./packetsniff <interface> <packet_count>
-```
+---
 
-## Usage
+🧪 Usage
+-----
 
 ```bash
-./packetsniff <interface> <packet_count>
+sudo ./packetsniff <interface> <packet_count> [-n] [-f "filter"]
 ```
 
-### Arguments
+🔤 **Arguments**
 
-- `interface`: Network interface to capture packets from (e.g., en0, eth0)
-- `packet_count`: Number of packets to capture (-1 for infinite capture)
+| Argument | Description |
+|----------|-------------|
+| `<interface>` | Network interface to capture packets from (e.g., en0, eth0) |
+| `<packet_count>` | Number of packets to capture (-1 for infinite capture) |
+| `-n` | Disable DNS hostname resolution (optional) |
+| `-f "filter"` | BPF filter expression to capture specific packets (optional) |
 
-### Examples
+---
 
-Capture 10 packets on interface en0:
+🧾 Examples
+--------
+
+**Basic packet capture:**
 ```bash
-./packetsniff en0 10
+sudo ./packetsniff en0 10
 ```
 
-Capture packets indefinitely on interface en0:
+**Capture packets indefinitely:**
 ```bash
-./packetsniff en0 -1
+sudo ./packetsniff en0 -1
 ```
 
-## Output Format
-
-The program displays packet information in the following format:
-
-```
-************************************
-ID: <packet_id> | SRC: <source_ip> | DST: <dest_ip> | TOS: <tos> | TTL: <ttl>
-PROTO: <protocol> | [Additional protocol-specific information]
+**Capture only HTTPS traffic:**
+```bash
+sudo ./packetsniff en0 20 -f "port 443"
 ```
 
-### Protocol-specific Information
+**Capture packets from a specific host:**
+```bash
+sudo ./packetsniff en0 -1 -f "host google.com"
+```
 
-- TCP: Shows flags (S/A/U) and port numbers
-- UDP: Shows source and destination ports
-- ICMP: Shows type and code
+**Capture only TCP packets with SYN flag (connection attempts):**
+```bash
+sudo ./packetsniff en0 10 -f "tcp[tcpflags] & tcp-syn != 0"
+```
 
-## Notes
+**Capture DNS traffic without hostname resolution:**
+```bash
+sudo ./packetsniff en0 30 -n -f "udp port 53"
+```
 
-- The program requires root/administrator privileges to capture packets
-- Use Ctrl+C to stop packet capture when running in infinite mode
-- The program currently only supports IPv4 packets
+---
 
-## License
+🧠 BPF Filter Cheatsheet
+----------------
+
+| Expression | Matches |
+|------------|---------|
+| `host example.com` | Only packets to/from example.com |
+| `port 80` | Only HTTP traffic |
+| `tcp` | Only TCP packets |
+| `udp` | Only UDP packets |
+| `icmp` | Only ICMP packets |
+| `src 192.168.1.1` | Only packets from a specific IP |
+| `dst port 443` | Only packets to HTTPS ports |
+| `udp port 53` | Only DNS traffic |
+| `tcp[tcpflags] & tcp-syn != 0` | Only TCP SYN packets |
+| `ether host 00:11:22:33:44:55` | Filter by MAC address |
+| `ip broadcast` | Only broadcast packets |
+| `ip multicast` | Only multicast packets |
+
+🔗 **Combine filters:**
+```bash
+sudo ./packetsniff en0 -1 -f "host google.com and not port 443"
+```
+
+---
+
+🖨 Output Format
+------------
+
+```
+[HH:MM:SS.μμμμμμ] Packet XXX B
+----------------------------------------
+IP Header:
+  ID: XXXXX | TTL: XX | TOS: 0xXX
+  Source: XXX.XXX.XXX.XXX (hostname)
+  Destination: XXX.XXX.XXX.XXX (hostname)
+Transport Layer:
+  Protocol: XXX
+  Source Port: XXX (Service)
+  Destination Port: XXX (Service)
+  [Protocol-specific information]
+----------------------------------------
+```
+
+**Protocol-specific Information**
+- **TCP**: Shows flags, window size, sequence number
+- **UDP**: Shows length
+- **ICMP**: Shows type and code with descriptions
+
+---
+
+🛠 Troubleshooting
+--------------
+
+❗ **Permission Denied**  
+If you see "Permission denied" errors, ensure you're running with sudo/root:
+```bash
+sudo ./packetsniff en0 10
+```
+
+❗ **Interface Not Found**  
+Verify your network interface name with:
+```bash
+# On Linux
+ip addr
+
+# On macOS
+ifconfig
+```
+
+❗ **Invalid Filter Syntax**  
+If your filter fails to compile, check the syntax. Common issues include:
+- Missing quotes around complex expressions
+- Typos in protocol names
+- Missing logical operators between clauses
+
+---
+
+🚫 Limitations
+-----------
+- ❌ Currently supports IPv4 only (no IPv6)
+- ❌ Cannot decrypt encrypted traffic (e.g., HTTPS content)
+- ❌ Minimal packet payload analysis
+
+---
+
+🌱 Future Improvements
+------------------
+- ✅ IPv6 support
+- ✅ Traffic statistics generation
+- ✅ Packet payload inspection
+- ✅ Export to PCAP format
+- ✅ Colorized output
+
+---
+
+📜 License
+-------
 
 This project is open source and available under the MIT License.
+
+---
+
+📚 References
+----------
+- 📘 [libpcap Documentation](https://www.tcpdump.org/manpages/pcap.3pcap.html)
+- 🔍 [Berkeley Packet Filter (BPF) Syntax](https://biot.com/capstats/bpf.html)
+- 📖 [TCP/IP Illustrated](https://en.wikipedia.org/wiki/TCP/IP_Illustrated)
 
 
