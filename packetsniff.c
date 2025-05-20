@@ -1,5 +1,9 @@
 #include <arpa/inet.h>
 #include <netinet/ip.h>
+#include <netinet/in.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 #include <pcap/pcap.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +51,40 @@ void call_me_pls(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *p
     
     printf("************************************" "**************************************\n");
     printf("ID: %d | SRC: %s | DST: %s | TOS: 0x%x | TTL: %d\n", packet_id, packet_srcip, packet_dstip, packet_tos, packet_ttl);
+
+    packet_ptr += (4 * packet_hlen); // Move pointer to the start of the transport layer header
+    int transport_protocol = ip_hdr->ip_p; // Transport layer protocol (TCP, UDP, ICMP)
+
+    struct tcphdr *tcp_hdr;
+    struct udphdr *udp_hdr;
+    struct icmp *icmp_hdr;
+    int src_port, dst_port;
+    
+    switch (transport_protocol) {
+        case IPPROTO_TCP:
+            tcp_hdr = (struct tcphdr *)packet_ptr;
+            src_port = tcp_hdr->th_sport; // Source port
+            dst_port = tcp_hdr->th_dport; // Destination port
+            // Print TCP header information
+            printf("PROTO: TCP | FLAGS: %c/%c/%c | SPORT: %d | DPORT: %d |\n", (tcp_hdr->th_flags & TH_SYN ? 'S' : '-'), (tcp_hdr->th_flags & TH_ACK ? 'A' : '-'), (tcp_hdr->th_flags & TH_URG ? 'U' : '-'), src_port, dst_port);
+            break;
+        case IPPROTO_UDP:
+            udp_hdr = (struct udphdr *)packet_ptr;
+            src_port = udp_hdr->uh_sport;
+            dst_port = udp_hdr->uh_dport;
+            printf("PROTO: UDP | SPORT: %d | DPORT: %d |\n", src_port, dst_port);
+            break;
+        case IPPROTO_ICMP:
+            icmp_hdr = (struct icmp *)packet_ptr;
+            int icmp_type = icmp_hdr->icmp_type;
+            int icmp_type_code = icmp_hdr->icmp_code;
+            printf("PROTO: ICMP | TYPE: %d | CODE: %d |\n", icmp_type, icmp_type_code);
+            break;
+        default:
+            printf("Unknown transport protocol\n");
+    }
+    
+ 
 }
 
 int main(int argc, char *argv[]) {
