@@ -1,19 +1,61 @@
-# Ignore macOS system files
-.DS_Store
+# Compiled Object files
+*.o
+*.obj
+*.elf
+*.bin
 
-# Ignore build artifacts
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
 packetsniff
-packetsniff.dSYM/
+packetsniff-basic
 
-# Ignore logs and temporary files
-*.log
-*.tmp
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
 
-# Ignore editor-specific files
+# IDE specific files
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
 
-# Ignore core dumps
-core
-core.*
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build directory
+build/
+dist/
+
+# Log files
+*.log
+packet_capture.log
+
+# Temporary files
+*.tmp
+*.temp

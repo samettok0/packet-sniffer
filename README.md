@@ -1,63 +1,109 @@
 # Packet Sniffer
 
-A simple packet sniffer written in C using the libpcap library. This tool captures network packets from a specified network interface.
+A simple network packet sniffer written in C that captures and analyzes network traffic. The program can capture and display information about IPv4 packets, including TCP, UDP, and ICMP protocols.
 
-## Overview
+## Features
 
-This project demonstrates the basics of packet capture in C. In this first part, the sniffer:
-- Opens a network interface in promiscuous mode
-- Captures a specified number of packets (currently set to 5)
-- Outputs a simple message for each captured packet
+- Captures IPv4 packets
+- Supports multiple protocols:
+  - TCP (with flag detection)
+  - UDP
+  - ICMP
+- Displays detailed packet information:
+  - Source and destination IP addresses
+  - Protocol type
+  - Port numbers (for TCP/UDP)
+  - TCP flags (SYN, ACK, URG)
+  - ICMP type and code
+  - TTL and TOS values
+  - Packet ID
 
-## Prerequisites
+## Requirements
 
-- C compiler (gcc/clang)
-- libpcap development package
+- Linux/Unix-like operating system
+- libpcap development library
+- GCC compiler
 
-### Installation on macOS
+### Installing Dependencies
 
+On Ubuntu/Debian:
 ```bash
-# Install libpcap using Homebrew
+sudo apt-get install libpcap-dev
+```
+
+On macOS:
+```bash
 brew install libpcap
 ```
 
-### Installation on Linux
+## Building
 
+You can compile the program using either `cc` or `gcc`. Both commands will work:
+
+Using `cc`:
 ```bash
-# Debian/Ubuntu
-sudo apt-get install libpcap-dev
-
-# Fedora/RHEL
-sudo dnf install libpcap-devel
+cc -o packetsniff packetsniff.c -lpcap
 ```
 
-## Building the Project
-
+Using `gcc`:
 ```bash
-# Compile the packet sniffer
 gcc -o packetsniff packetsniff.c -lpcap
+```
+
+> **Note:** `cc` is the traditional name for the C compiler on Unix systems. It's often a symbolic link to the actual compiler (like `gcc` or `clang`) on your system. Both commands will work the same way.
+
+After compilation, run the program with sudo privileges:
+```bash
+sudo ./packetsniff <interface> <packet_count>
 ```
 
 ## Usage
 
 ```bash
-# May need root permissions to capture packets
-sudo ./packetsniff
+./packetsniff <interface> <packet_count>
 ```
 
-> **Note:** The current implementation uses "en0" as the network interface. You may need to change this to match your system's network interface name.
+### Arguments
 
-## Configuration
+- `interface`: Network interface to capture packets from (e.g., en0, eth0)
+- `packet_count`: Number of packets to capture (-1 for infinite capture)
 
-To modify the network interface or number of packets to capture, edit the following variables in `packetsniff.c`:
+### Examples
 
-- `char *device = "en0";` - Set to your network interface name
-- `int packet_count = 5;` - Change to capture more or fewer packets
+Capture 10 packets on interface en0:
+```bash
+./packetsniff en0 10
+```
 
-## Features (Part 1)
+Capture packets indefinitely on interface en0:
+```bash
+./packetsniff en0 -1
+```
 
-- Basic packet capture capability
-- Simple callback function for packet processing
-- Error handling for pcap operations
+## Output Format
+
+The program displays packet information in the following format:
+
+```
+************************************
+ID: <packet_id> | SRC: <source_ip> | DST: <dest_ip> | TOS: <tos> | TTL: <ttl>
+PROTO: <protocol> | [Additional protocol-specific information]
+```
+
+### Protocol-specific Information
+
+- TCP: Shows flags (S/A/U) and port numbers
+- UDP: Shows source and destination ports
+- ICMP: Shows type and code
+
+## Notes
+
+- The program requires root/administrator privileges to capture packets
+- Use Ctrl+C to stop packet capture when running in infinite mode
+- The program currently only supports IPv4 packets
+
+## License
+
+This project is open source and available under the MIT License.
 
 
